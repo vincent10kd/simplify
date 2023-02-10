@@ -1,0 +1,96 @@
+#' @title Retrieve information from a long-format data.frame as wide, binary format
+#'
+#' @description Returns a structured data.frame on the basis of long, free-text data with IDs.
+#'
+#' @param data A long-form data.frame.
+#' @param charVar The column containing the free-text information.
+#' @param idVar The column containing the ID by which to summarize the charVar information.
+#' @param pattern A character vector of regular expressions identifying the information of interest in charVar.
+#' @param patternNames If TRUE, assigns the variables in the returned data.frame column names matching the regular expressions in pattern.
+
+#' @return A wide-format data.frame.
+#' @examples
+#' # create some data
+#' set.seed(1234)
+#' id <- paste0('pat_',sample(100,100,replace=FALSE))
+#' atc3_codes <- c('A01A', 'A02A', 'A02B', 'A02X', 'A03A', 'A03B', 'A03C', 'A03D',
+#'                 'A03E', 'A03F', 'A04A', 'A05A', 'A05B', 'A05C', 'A06A', 'A07A',
+#'                 'A07B', 'A07C', 'A07D', 'A07E', 'A07F', 'A07X', 'A08A', 'A09A',
+#'                 'A10A', 'A10B', 'A10X', 'A11A', 'A11B', 'A11C', 'A11D', 'A11E',
+#'                 'A11G', 'A11H', 'A11J', 'A12A', 'A12B', 'A12C', 'A13A', 'A14A',
+#'                 'A14B', 'A16A', 'B01A', 'B02A', 'B02B', 'B03A', 'B03B', 'B03X',
+#'                 'B05A', 'B05B', 'B05C', 'B05D', 'B05X', 'B05Z', 'B06A', 'C01A',
+#'                 'C01B', 'C01C', 'C01D', 'C01E', 'C02A', 'C02B', 'C02C', 'C02D',
+#'                 'C02K', 'C02L', 'C02N', 'C03A', 'C03B', 'C03C', 'C03D', 'C03E',
+#'                 'C03X', 'C04A', 'C05A', 'C05B', 'C05C', 'C07A', 'C07B', 'C07C',
+#'                 'C07D', 'C07E', 'C07F', 'C08C', 'C08D', 'C08E', 'C08G', 'C09A',
+#'                 'C09B', 'C09C', 'C09D', 'C09X', 'C10A', 'C10B', 'D01A', 'D01B',
+#'                 'D02A', 'D02B', 'D03A', 'D03B', 'D04A', 'D05A', 'D05B', 'D06A',
+#'                 'D06B', 'D06C', 'D07A', 'D07B', 'D07C', 'D07X', 'D08A', 'D09A',
+#'                 'D10A', 'D10B', 'D11A', 'G01A', 'G01B', 'G02A', 'G02B', 'G02C',
+#'                 'G03A', 'G03B', 'G03C', 'G03D', 'G03E', 'G03F', 'G03G', 'G03H',
+#'                 'G03X', 'G04B', 'G04C', 'H01A', 'H01B', 'H01C', 'H02A', 'H02B',
+#'                 'H02C', 'H03A', 'H03B', 'H03C', 'H04A', 'H05A', 'H05B', 'J01A',
+#'                 'J01B', 'J01C', 'J01D', 'J01E', 'J01F', 'J01G', 'J01M', 'J01R',
+#'                 'J01X', 'J02A', 'J04A', 'J04B', 'J05A', 'J06A', 'J06B', 'J07A',
+#'                 'J07B', 'J07C', 'J07X', 'L01A', 'L01B', 'L01C', 'L01D', 'L01X',
+#'                 'L02A', 'L02B', 'L03A', 'L04A', 'M01A', 'M01B', 'M01C', 'M02A',
+#'                 'M03A', 'M03B', 'M03C', 'M04A', 'M05B', 'M09A', 'N01A', 'N01B',
+#'                 'N02A', 'N02B', 'N02C', 'N03A', 'N04A', 'N04B', 'N05A', 'N05B',
+#'                 'N05C', 'N06A', 'N06B', 'N06C', 'N06D', 'N07A', 'N07B', 'N07C',
+#'                 'N07X', 'P01A', 'P01B', 'P01C', 'P02B', 'P02C', 'P02D', 'P03A',
+#'                 'P03B', 'R01A', 'R01B', 'R02A', 'R03A', 'R03B', 'R03C', 'R03D',
+#'                 'R05C', 'R05D', 'R05F', 'R05X', 'R06A', 'R07A', 'S01A', 'S01B',
+#'                 'S01C', 'S01E', 'S01F', 'S01G', 'S01H', 'S01J', 'S01K', 'S01L',
+#'                 'S01X', 'S02A', 'S02B', 'S02C', 'S02D', 'S03A', 'S03B', 'S03C',
+#'                 'S03D', 'V01A', 'V03A', 'V04B', 'V04C', 'V06A', 'V06B', 'V06C',
+#'                 'V06D', 'V07A', 'V08A', 'V08B', 'V08C', 'V08D', 'V09A', 'V09B',
+#'                 'V09C', 'V09D', 'V09E', 'V09F', 'V09G', 'V09H', 'V09I', 'V09X',
+#'                 'V10A', 'V10B', 'V10X')
+#' # randomly repeat IDs up to 7 times
+#' patvec <- character()
+#' for(i in seq_along(id)){
+#'   patvec <- c(patvec,rep(id[i],sample(0:7,1)))
+#' }
+#'
+#' atc_data <- data.frame(id=patvec,
+#'                        atc=sample(atc3_codes,length(patvec),replace=TRUE))
+#'
+#' head(atc_data)
+#' codes_of_interest <- sample(atc3_codes,13)
+#'
+#' medi <- retrieve(atc_data,
+#'                  charVar=atc,
+#'                  idVar=id,
+#'                  pattern=codes_of_interest)
+#'
+#' head(medi)
+
+#' @export
+
+retrieve <- function(data, charVar, idVar, pattern, patternNames=TRUE){
+  mc <- as.list(match.call())
+  mc[[1]] <- NULL
+  charName <- mc[[2]]
+  # evaluate charVar in data
+  charVar <- str2expression(paste0(mc[[1]],'$',mc[[2]]))
+  charVar <- eval(charVar,parent.frame())
+  idName <- mc[[3]]
+  # evaluate idVar in data
+  idVar <- str2expression(paste0(mc[[1]],'$',mc[[3]]))
+  idVar <- eval(idVar,parent.frame())
+  df <- aggregate(charVar~idVar,FUN=function(x) grep(pattern[1],x))
+  df[,2] <- ifelse(is.na(as.numeric(df[,2])),0,1)
+  colnames(df) <- c(idName,paste0(charName,'_',1))
+  if(length(pattern)>1){
+    for(p in 2:length(pattern)){
+      df2 <- aggregate(charVar~idVar,FUN=function(x) grep(pattern[p],x))
+      df2[,2] <- ifelse(is.na(as.numeric(df2[,2])),0,1)
+      colnames(df2) <- c(idName,paste0(charName,'_',p))
+      df <- cbind(df,df2[,2])
+    }
+  }
+  if(patternNames==TRUE) colnames(df)[2:ncol(df)] <- gsub('[^[:alnum:]]','',pattern)
+  return(df)
+}
+
